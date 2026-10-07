@@ -71,7 +71,7 @@ Bei Kündigungs-, Rückgabe-, Garantie- oder sonstigen rechtlich relevanten Fris
 nur ein Datum setzen, wenn es ausdrücklich oder eindeutig aus dem Dokument folgt.
 needsConfirmation=true, sobald eine Frist, ein Termin oder Vertragsdetail erkannt wurde.
 evidence: kurze Fundstellen/Begründungen, keine langen Zitate.`},
-          {type:"input_file", file_id:uploaded.id}
+          {type:"input_image", file_id:uploaded.id}
         ]
       }],
       text:{
