@@ -206,7 +206,7 @@ async function analyzeDocument(){
   let result=null;
   try{
     const fd=new FormData(); fd.append("document",f);
-    const res=await fetch("/api/analyze",{method:"POST",body:fd});
+    const res=await fetch("https://keeply-zkmw.onrender.com/api/analyze",{method:"POST",body:fd});
     if(res.ok) result=await res.json();
   }catch(e){}
   if(!result){
