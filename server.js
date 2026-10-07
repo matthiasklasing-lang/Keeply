@@ -47,13 +47,9 @@ const schema = {
 app.post("/api/analyze", upload.single("document"), async (req,res) => {
   if (!req.file) return res.status(400).json({error:"Kein Dokument"});
   try {
-    const uploaded = await client.files.create({
-      file: await fs.open(req.file.path).then(async h => {
-        await h.close();
-        return (await import("node:fs")).createReadStream(req.file.path);
-      }),
-      purpose: "user_data"
-    });
+const imageBase64 = await fs.readFile(req.file.path, { encoding: "base64" });
+
+const imageUrl = `data:${req.file.mimetype};b   
 
     const response = await client.responses.create({
       model: process.env.KEEPly_MODEL || "gpt-6-luna",
@@ -71,7 +67,7 @@ Bei Kündigungs-, Rückgabe-, Garantie- oder sonstigen rechtlich relevanten Fris
 nur ein Datum setzen, wenn es ausdrücklich oder eindeutig aus dem Dokument folgt.
 needsConfirmation=true, sobald eine Frist, ein Termin oder Vertragsdetail erkannt wurde.
 evidence: kurze Fundstellen/Begründungen, keine langen Zitate.`},
-          {type:"input_image", file_id:uploaded.id}
+          {type:"input_image", image_url:imageUrl}
         ]
       }],
       text:{
