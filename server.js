@@ -2,9 +2,12 @@ import express from "express";
 import multer from "multer";
 import OpenAI from "openai";
 import fs from "fs/promises";
-import path from "path";
+import path from "path"l;
+
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 12 * 1024 * 1024 },
