@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Keeply V0.3</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--soft:#eef2ff;--danger:#b91c1c;--warn:#b45309;--ok:#047857}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.app{max-width:760px;margin:auto;min-height:100vh;padding:18px 16px 96px}.top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 20px}.brand{font-weight:850;font-size:27px;letter-spacing:-1px}.tag{font-size:12px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#111827,#374151);color:white;border-radius:24px;padding:22px;margin-bottom:14px}.hero h1{font-size:24px;line-height:1.05;margin:0 0 8px}.hero p{margin:0;color:#d1d5db;line-height:1.45}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}.stat b{font-size:23px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.section{margin-top:22px}.section h2{font-size:17px;margin:0 0 10px}.row{display:flex;gap:10px;align-items:center}.grow{flex:1}.item{background:white;border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:9px}.item .title{font-weight:750}.meta{font-size:12px;color:var(--muted);margin-top:4px}.badge{font-size:11px;padding:5px 8px;border-radius:999px;background:#f3f4f6;white-space:nowrap}.due{color:var(--danger);font-weight:700}.soon{color:var(--warn);font-weight:700}
+button,.btn{border:0;border-radius:14px;padding:12px 14px;font-weight:750;background:var(--accent);color:#fff;cursor:pointer}.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}.danger{background:#fee2e2;color:#991b1b}
+.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);width:min(728px,calc(100% - 32px));box-shadow:0 12px 30px #0003;font-size:16px}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit;margin-top:6px}label{display:block;font-size:12px;font-weight:700;color:#4b5563;margin:12px 0 0}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+dialog{border:0;border-radius:22px;width:min(650px,calc(100% - 24px));max-height:90vh;padding:0;box-shadow:0 24px 80px #0005}.modal{padding:20px;overflow:auto;max-height:90vh}.modalhead{display:flex;justify-content:space-between;align-items:center}.modalhead h2{margin:0}.x{background:#f3f4f6;color:#111827;padding:8px 11px}
+.actions{display:flex;gap:8px;margin-top:18px}.actions button{flex:1}.empty{text-align:center;color:var(--muted);padding:28px 8px}.search{margin-bottom:10px}
+.note{font-size:12px;color:var(--muted);line-height:1.4;margin-top:10px}.filebox{border:1px dashed #cbd5e1;padding:12px;border-radius:14px;margin-top:12px;background:#f8fafc}
+@media(max-width:520px){.two{grid-template-columns:1fr}.hero h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div><div class="brand">Keeply</div><div class="tag">Dein Papierkram. Organisiert.</div></div><span class="badge">V0.3</span></div>
+  <div class="hero"><h1>Was musst du als Nächstes wissen?</h1><p>Keeply sammelt Käufe, Verträge, Termine und Briefe an einem Ort – inklusive Fristen und Kosten.</p></div>
+  <div class="grid">
+    <div class="stat"><b id="dueCount">0</b><span>bald fällig</span></div>
+    <div class="stat"><b id="monthly">0,00 €</b><span>Verträge / Monat</span></div>
+    <div class="stat"><b id="docsCount">0</b><span>Dokumente</span></div>
+    <div class="stat"><b id="yearly">0,00 €</b><span>Verträge / Jahr</span></div>
+  </div>
+
+  <div class="section"><h2>Als Nächstes</h2><div id="upcoming"></div></div>
+  <div class="section">
+    <h2>Alle Einträge</h2>
+    <input class="search" id="search" placeholder="Suchen, z. B. Vodafone, Bohrmaschine …">
+    <div id="list"></div>
+  </div>
+</div>
+<button class="fab" onclick="openForm()">＋ Dokument hinzufügen</button>
+
+<dialog id="dlg">
+<div class="modal">
+  <div class="modalhead"><h2 id="formTitle">Dokument hinzufügen</h2><button class="x" onclick="dlg.close()">✕</button></div>
+  <form id="form">
+    <input type="hidden" id="id">
+    <label>Art
+      <select id="type" required onchange="adapt()">
+        <option value="purchase">Kauf / Rechnung</option>
+        <option value="contract">Vertrag / Abo</option>
+        <option value="appointment">Termin</option>
+        <option value="letter">Brief / Sonstiges</option>
+      </select>
+    </label>
+    <label>Titel / Produkt / Anbieter<input id="title" required placeholder="z. B. Bosch Akkuschrauber"></label>
+    <div class="two">
+      <label>Datum<input id="date" type="date"></label>
+      <label>Betrag (€)<input id="amount" type="number" step="0.01" min="0" placeholder="0,00"></label>
+    </div>
+    <div id="contractFields">
+      <div class="two">
+        <label>Zahlungsrhythmus<select id="cycle"><option value="monthly">monatlich</option><option value="yearly">jährlich</option><option value="once">einmalig</option></select></label>
+        <label>Kündigen bis<input id="cancelDate" type="date"></label>
+      </div>
+    </div>
+    <div id="purchaseFields">
+      <div class="two">
+        <label>Rückgabe bis<input id="returnDate" type="date"></label>
+        <label>Garantie bis<input id="warrantyDate" type="date"></label>
+      </div>
+      <label>Rechnungs-/Bestellnummer<input id="invoice" placeholder="optional"></label>
+    </div>
+    <div id="appointmentFields">
+      <div class="two">
+        <label>Termin<input id="appointmentDate" type="datetime-local"></label>
+        <label>Ort<input id="location" placeholder="z. B. Kinderarzt"></label>
+      </div>
+    </div>
+    <label>Frist / Erinnerung<input id="deadline" type="date"></label>
+    <label>Notiz<textarea id="notes" rows="3" placeholder="Was ist wichtig?"></textarea></label>
+    <div class="filebox">
+      <b>Dokument / Foto</b>
+      <input id="file" type="file" accept="image/*,.pdf" capture="environment" onchange="filePicked()">
+      <div id="previewWrap" style="display:none;margin-top:10px">
+        <img id="preview" alt="Dokumentvorschau" style="max-width:100%;max-height:220px;border-radius:12px;border:1px solid #e5e7eb">
+      </div>
+      <button type="button" id="analyzeBtn" class="secondary" style="width:100%;margin-top:10px" onclick="analyzeDocument()" disabled>✨ Dokument analysieren</button>
+      <div id="analysisBox" class="note" style="display:none;padding:10px;border-radius:12px;background:#eef2ff;color:#3730a3"></div>
+      <div class="note">V0.3: Foto/PDF auswählen und analysieren. Wenn Keeply über den mitgelieferten Server läuft, wird das Dokument per KI ausgelesen. Erkannte Fristen bleiben prüfpflichtig.</div>
+    </div>
+    <div class="actions"><button type="button" class="secondary" onclick="dlg.close()">Abbrechen</button><button type="submit">Speichern</button></div>
+    <button type="button" id="deleteBtn" class="danger" style="width:100%;margin-top:8px;display:none" onclick="removeCurrent()">Eintrag löschen</button>
+  </form>
+</div>
+</dialog>
+
+<script>
+const KEY="keeply-v01";
+let docs=JSON.parse(localStorage.getItem(KEY)||"[]");
+const $=id=>document.getElementById(id), dlg=$("dlg");
+const fmt=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(n||0);
+const dstr=s=>s?new Date(s+"T12:00:00").toLocaleDateString("de-DE"):"";
+const labels={purchase:"Kauf",contract:"Vertrag",appointment:"Termin",letter:"Brief"};
+
+function relevantDate(x){
+  let ds=[];
+  if(x.deadline) ds.push({date:x.deadline,label:"Frist"});
+  if(x.type==="purchase"&&x.returnDate) ds.push({date:x.returnDate,label:"Rückgabe"});
+  if(x.type==="purchase"&&x.warrantyDate) ds.push({date:x.warrantyDate,label:"Garantie"});
+  if(x.type==="contract"&&x.cancelDate) ds.push({date:x.cancelDate,label:"Kündigung"});
+  if(x.type==="appointment"&&x.appointmentDate) ds.push({date:x.appointmentDate.slice(0,10),label:"Termin"});
+  ds=ds.filter(a=>new Date(a.date+"T23:59:59")>=new Date()).sort((a,b)=>a.date.localeCompare(b.date));
+  return ds[0]||null;
+}
+function daysUntil(s){return Math.ceil((new Date(s+"T23:59:59")-new Date())/86400000)}
+function render(){
+  $("docsCount").textContent=docs.length;
+  let monthly=0;
+  docs.filter(x=>x.type==="contract").forEach(x=>{
+    let a=Number(x.amount)||0;
+    if(x.cycle==="monthly") monthly+=a;
+    if(x.cycle==="yearly") monthly+=a/12;
+  });
+  $("monthly").textContent=fmt(monthly); $("yearly").textContent=fmt(monthly*12);
+  let ups=docs.map(x=>({x,r:relevantDate(x)})).filter(o=>o.r).sort((a,b)=>a.r.date.localeCompare(b.r.date));
+  $("dueCount").textContent=ups.filter(o=>daysUntil(o.r.date)<=30).length;
+  $("upcoming").innerHTML=ups.slice(0,5).map(o=>itemHTML(o.x,o.r)).join("")||'<div class="card empty">Noch keine Fristen oder Termine.</div>';
+  drawList();
+}
+function itemHTML(x,r){
+  let cls=r&&daysUntil(r.date)<=7?"due":r&&daysUntil(r.date)<=30?"soon":"";
+  let right=r?`<div class="${cls}">${r.label}<br>${dstr(r.date)}</div>`:`<span class="badge">${labels[x.type]}</span>`;
+  return `<div class="item row" onclick="edit('${x.id}')"><div class="grow"><div class="title">${escapeHtml(x.title)}</div><div class="meta">${labels[x.type]}${x.amount? " · "+fmt(Number(x.amount)):""}${x.date?" · "+dstr(x.date):""}</div></div>${right}</div>`;
+}
+function drawList(){
+  let q=$("search").value.toLowerCase().trim();
+  let arr=docs.filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+  $("list").innerHTML=arr.map(x=>itemHTML(x,null)).join("")||'<div class="card empty">Noch nichts gespeichert.</div>';
+}
+$("search").addEventListener("input",drawList);
+
+function openForm(){
+  $("form").reset(); $("id").value=""; $("formTitle").textContent="Dokument hinzufügen"; $("deleteBtn").style.display="none";
+  $("date").value=new Date().toISOString().slice(0,10); $("previewWrap").style.display="none"; $("analysisBox").style.display="none"; $("analyzeBtn").disabled=true; $("analyzeBtn").textContent="✨ Dokument analysieren"; adapt(); dlg.showModal();
+}
+function adapt(){
+  let t=$("type").value;
+  $("contractFields").style.display=t==="contract"?"block":"none";
+  $("purchaseFields").style.display=t==="purchase"?"block":"none";
+  $("appointmentFields").style.display=t==="appointment"?"block":"none";
+}
+$("form").addEventListener("submit",e=>{
+  e.preventDefault();
+  let id=$("id").value||crypto.randomUUID();
+  let old=docs.find(x=>x.id===id)||{};
+  let f=$("file").files[0];
+  let x={...old,id,type:$("type").value,title:$("title").value.trim(),date:$("date").value,amount:$("amount").value,cycle:$("cycle").value,cancelDate:$("cancelDate").value,returnDate:$("returnDate").value,warrantyDate:$("warrantyDate").value,invoice:$("invoice").value,appointmentDate:$("appointmentDate").value,location:$("location").value,deadline:$("deadline").value,notes:$("notes").value,fileName:f?f.name:(old.fileName||"")};
+  docs=docs.filter(a=>a.id!==id); docs.unshift(x); save(); dlg.close(); render();
+});
+function edit(id){
+  let x=docs.find(a=>a.id===id); if(!x)return;
+  ["id","type","title","date","amount","cycle","cancelDate","returnDate","warrantyDate","invoice","appointmentDate","location","deadline","notes"].forEach(k=>{if($(k))$(k).value=x[k]||""});
+  $("formTitle").textContent="Eintrag bearbeiten"; $("deleteBtn").style.display="block"; adapt(); dlg.showModal();
+}
+function removeCurrent(){
+  let id=$("id").value;if(!id)return;
+  if(confirm("Diesen Eintrag wirklich löschen?")){docs=docs.filter(x=>x.id!==id);save();dlg.close();render()}
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(docs))}
+function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+function filePicked(){
+  const f=$("file").files[0], btn=$("analyzeBtn"), wrap=$("previewWrap"), img=$("preview");
+  btn.disabled=!f; $("analysisBox").style.display="none";
+  if(f && f.type.startsWith("image/")){
+    const u=URL.createObjectURL(f); img.src=u; wrap.style.display="block";
+  } else { wrap.style.display="none"; }
+}
+function inferFromFilename(name){
+  const n=(name||"").replace(/\.[^.]+$/,"").replace(/[_-]+/g," ");
+  let out={};
+  if(/vodafone|telekom|o2|1und1|netflix|spotify|fitness|versicherung/i.test(n)) out.type="contract";
+  else if(/termin|arzt|praxis|kindergarten|tuev|tüv/i.test(n)) out.type="appointment";
+  else if(/rechnung|bon|quittung|amazon|obi|ikea|mediamarkt|saturn/i.test(n)) out.type="purchase";
+  const money=n.match(/(\d{1,4})[,.](\d{2})\s?(eur|euro)?/i);
+  if(money) out.amount=(money[1]+"."+money[2]);
+  const date=n.match(/(20\d{2})[ ._-](\d{1,2})[ ._-](\d{1,2})|(\d{1,2})[ ._-](\d{1,2})[ ._-](20\d{2})/);
+  if(date){
+    let y,m,d;
+    if(date[1]){y=date[1];m=date[2];d=date[3]} else {d=date[4];m=date[5];y=date[6]}
+    out.date=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  }
+  let cleaned=n.replace(/\b(rechnung|bon|quittung|termin|vertrag|scan|foto|document|dokument)\b/ig," ").replace(/\s+/g," ").trim();
+  if(cleaned) out.title=cleaned.slice(0,80);
+  return out;
+}
+async function analyzeDocument(){
+  const f=$("file").files[0]; if(!f)return;
+  const box=$("analysisBox"), btn=$("analyzeBtn");
+  btn.disabled=true; btn.textContent="Analysiere …"; box.style.display="block";
+  box.textContent="Dokument wird vorbereitet …";
+  // V0.2 architecture: production version posts the file to /api/analyze.
+  // No secret/API key is embedded in the browser.
+  let result=null;
+  try{
+    const fd=new FormData(); fd.append("document",f);
+    const res=await fetch("/api/analyze",{method:"POST",body:fd});
+    if(res.ok) result=await res.json();
+  }catch(e){}
+  if(!result){
+    result=inferFromFilename(f.name);
+    box.innerHTML="<b>Offline-Modus:</b> Der Keeply-Server ist nicht erreichbar. Starte die App über das mitgelieferte Backend; dann wird der Dokumentinhalt tatsächlich analysiert.";
+  }else{
+    box.innerHTML="<b>Analyse abgeschlossen.</b> Bitte die erkannten Daten prüfen und anschließend speichern.";
+  }
+  if(result.type) $("type").value=result.type;
+  if(result.title) $("title").value=result.title;
+  if(result.date) $("date").value=result.date;
+  if(result.amount) $("amount").value=result.amount;
+  if(result.cancelDate) $("cancelDate").value=result.cancelDate;
+  if(result.returnDate) $("returnDate").value=result.returnDate;
+  if(result.warrantyDate) $("warrantyDate").value=result.warrantyDate;
+  if(result.invoice) $("invoice").value=result.invoice;
+  if(result.appointmentDate) $("appointmentDate").value=result.appointmentDate;
+  if(result.location) $("location").value=result.location;
+  if(result.deadline) $("deadline").value=result.deadline;
+  if(result.notes) $("notes").value=result.notes;
+  adapt(); btn.disabled=false; btn.textContent="✨ Dokument erneut analysieren";
+}
+
+render();
+</script>
+</body></html>
